@@ -1,0 +1,42 @@
+{
+  "name": "@profullstack/ai-dot-txt",
+  "version": "1.0.0",
+  "description": "CLI tool to generate ai.txt and llms.txt files for AI/LLM policies",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "aidottxt": "src/cli.js"
+  },
+  "scripts": {
+    "test": "mocha tests/**/*.test.js",
+    "test:watch": "mocha tests/**/*.test.js --watch",
+    "lint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix",
+    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.js\" \"tests/**/*.js\""
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "ai.txt",
+    "llms.txt",
+    "robots.txt",
+    "cli",
+    "generator"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "inquirer": "^12.9.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.37.0",
+    "chai": "^5.1.2",
+    "eslint": "^9.17.0",
+    "mocha": "^11.0.1",
+    "prettier": "^3.4.2"
+  }
+}
