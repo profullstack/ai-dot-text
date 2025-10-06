@@ -1,5 +1,10 @@
 import { expect } from "chai";
-import { buildAiTxt, buildLlmsJson } from "../src/generators.js";
+import {
+  buildAiTxt,
+  buildLlmsJson,
+  buildRobotsTxt,
+  buildHumansTxt,
+} from "../src/generators.js";
 
 describe("File Generators", () => {
   describe("buildLlmsJson", () => {
@@ -152,6 +157,130 @@ describe("File Generators", () => {
       expect(result).to.include("Allow: /path3");
       expect(result).to.include("Disallow: /secret1");
       expect(result).to.include("Disallow: /secret2");
+    });
+  });
+
+  describe("buildRobotsTxt", () => {
+    it("should generate valid robots.txt format", () => {
+      const config = {
+        userAgent: "*",
+        allowPaths: ["/api/*", "/docs/*"],
+        disallowPaths: ["/admin/*", "/private/*"],
+        crawlDelay: 1,
+        sitemap: "https://example.com/sitemap.xml",
+      };
+
+      const result = buildRobotsTxt(config);
+
+      expect(result).to.include("User-agent: *");
+      expect(result).to.include("Allow: /api/*");
+      expect(result).to.include("Allow: /docs/*");
+      expect(result).to.include("Disallow: /admin/*");
+      expect(result).to.include("Disallow: /private/*");
+      expect(result).to.include("Crawl-delay: 1");
+      expect(result).to.include("Sitemap: https://example.com/sitemap.xml");
+    });
+
+    it("should handle empty allow paths", () => {
+      const config = {
+        userAgent: "*",
+        allowPaths: [],
+        disallowPaths: ["/admin/*"],
+        crawlDelay: 0,
+        sitemap: "",
+      };
+
+      const result = buildRobotsTxt(config);
+
+      expect(result).to.include("User-agent: *");
+      expect(result).to.include("Disallow: /admin/*");
+      expect(result).to.not.include("Allow:");
+      expect(result).to.not.include("Crawl-delay:");
+      expect(result).to.not.include("Sitemap:");
+    });
+
+    it("should handle multiple user agents", () => {
+      const config = {
+        userAgent: "Googlebot",
+        allowPaths: ["/*"],
+        disallowPaths: [],
+        crawlDelay: 0,
+        sitemap: "",
+      };
+
+      const result = buildRobotsTxt(config);
+
+      expect(result).to.include("User-agent: Googlebot");
+    });
+  });
+
+  describe("buildHumansTxt", () => {
+    it("should generate valid humans.txt format with team members", () => {
+      const config = {
+        siteName: "My Awesome Site",
+        siteUrl: "https://example.com",
+        language: "English",
+        team: [
+          { name: "John Doe", role: "Developer", link: "https://github.com/johndoe" },
+          { name: "Jane Smith", role: "Designer", link: "https://twitter.com/janesmith" },
+        ],
+        thanks: ["Open Source Community", "Coffee"],
+        technology: ["Node.js", "JavaScript", "HTML5"],
+        lastUpdate: "2024/01/01",
+      };
+
+      const result = buildHumansTxt(config);
+
+      expect(result).to.include("/* TEAM */");
+      expect(result).to.include("Developer: John Doe");
+      expect(result).to.include("Contact: https://github.com/johndoe");
+      expect(result).to.include("Designer: Jane Smith");
+      expect(result).to.include("Contact: https://twitter.com/janesmith");
+      expect(result).to.include("/* THANKS */");
+      expect(result).to.include("Open Source Community");
+      expect(result).to.include("Coffee");
+      expect(result).to.include("/* SITE */");
+      expect(result).to.include("Standards: HTML5");
+      expect(result).to.include("Components: Node.js, JavaScript");
+      expect(result).to.include("Last update: 2024/01/01");
+      expect(result).to.include("Language: English");
+    });
+
+    it("should handle empty team array", () => {
+      const config = {
+        siteName: "Test Site",
+        siteUrl: "https://test.com",
+        language: "English",
+        team: [],
+        thanks: [],
+        technology: ["Node.js"],
+        lastUpdate: "2024/01/01",
+      };
+
+      const result = buildHumansTxt(config);
+
+      expect(result).to.include("/* TEAM */");
+      expect(result).to.include("/* SITE */");
+      expect(result).to.not.include("/* THANKS */");
+    });
+
+    it("should format team members correctly", () => {
+      const config = {
+        siteName: "Test",
+        siteUrl: "https://test.com",
+        language: "English",
+        team: [
+          { name: "Alice", role: "Lead Developer", link: "https://alice.dev" },
+        ],
+        thanks: [],
+        technology: ["React"],
+        lastUpdate: "2024/01/01",
+      };
+
+      const result = buildHumansTxt(config);
+
+      expect(result).to.include("Lead Developer: Alice");
+      expect(result).to.include("Contact: https://alice.dev");
     });
   });
 });

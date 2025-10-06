@@ -1,4 +1,4 @@
-# AI.txt & LLMs.txt Generator
+# @profullstack/ai-dot-txt
 
 A Node.js CLI tool to generate `ai.txt` and `llms.txt` files for defining AI/LLM policies for your website or application.
 
@@ -16,20 +16,20 @@ A Node.js CLI tool to generate `ai.txt` and `llms.txt` files for defining AI/LLM
 ### Global Installation
 
 ```bash
-pnpm add -g ai-txt-generator
+pnpm add -g @profullstack/ai-dot-txt
 ```
 
 ### Local Installation
 
 ```bash
-pnpm add -D ai-txt-generator
+pnpm add -D @profullstack/ai-dot-txt
 ```
 
 ### From Source
 
 ```bash
 git clone <repository-url>
-cd ai-txt-generator
+cd ai-dot-txt
 pnpm install
 ```
 
@@ -40,13 +40,13 @@ pnpm install
 Run the CLI and answer the prompts:
 
 ```bash
-ai-txt-init
+aidottxt
 ```
 
 ### Command-Line Options
 
 ```bash
-ai-txt-init [options]
+aidottxt [options]
 ```
 
 #### Options
@@ -61,27 +61,27 @@ ai-txt-init [options]
 
 Generate both files in current directory:
 ```bash
-ai-txt-init
+aidottxt
 ```
 
 Generate in a specific directory:
 ```bash
-ai-txt-init --out ./public
+aidottxt --out ./public
 ```
 
 Preview without writing files:
 ```bash
-ai-txt-init --dry-run
+aidottxt --dry-run
 ```
 
 Generate only ai.txt:
 ```bash
-ai-txt-init --ai-only --out ./dist
+aidottxt --ai-only --out ./dist
 ```
 
 Generate only llms.txt:
 ```bash
-ai-txt-init --llms-only
+aidottxt --llms-only
 ```
 
 ## Output Files
@@ -133,7 +133,7 @@ Located at `.well-known/llms.txt`. Format:
 You can also use this package programmatically:
 
 ```javascript
-import { buildAiTxt, buildLlmsJson } from "ai-txt-generator";
+import { buildAiTxt, buildLlmsJson } from "@profullstack/ai-dot-txt";
 
 const config = {
   siteName: "My Site",

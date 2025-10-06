@@ -27,6 +27,8 @@ export function parseArgs(args) {
     outDir: path.resolve(getFlagValue("--out", process.cwd())),
     onlyAi: flags.has("--ai-only"),
     onlyLlms: flags.has("--llms-only"),
+    onlyRobots: flags.has("--robots-only"),
+    onlyHumans: flags.has("--humans-only"),
     dryRun: flags.has("--dry-run"),
     help: flags.has("--help") || flags.has("-h"),
   };

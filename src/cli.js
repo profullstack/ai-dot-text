@@ -3,7 +3,12 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import inquirer from "inquirer";
 import { parseArgs } from "./args.js";
-import { buildAiTxt, buildLlmsJson } from "./generators.js";
+import {
+  buildAiTxt,
+  buildLlmsJson,
+  buildRobotsTxt,
+  buildHumansTxt,
+} from "./generators.js";
 
 const defaults = {
   siteName: "My Site",
@@ -17,9 +22,33 @@ const defaults = {
   retention: "allow",
   commercialUse: "allow",
   rateLimitRps: 10,
+  // robots.txt defaults
+  robotsUserAgent: "*",
+  robotsCrawlDelay: 0,
+  robotsSitemap: "",
+  // humans.txt defaults
+  language: "English",
+  lastUpdate: new Date().toISOString().split("T")[0].replace(/-/g, "/"),
 };
 
-const questions = [
+// Initial question to determine which files to generate
+const initialQuestions = [
+  {
+    type: "checkbox",
+    name: "filesToGenerate",
+    message: "Which files would you like to generate?",
+    choices: [
+      { name: "ai.txt (AI/LLM policies)", value: "ai", checked: true },
+      { name: "llms.txt (LLM policies JSON)", value: "llms", checked: true },
+      { name: "robots.txt (Web crawler rules)", value: "robots", checked: true },
+      { name: "humans.txt (Team credits)", value: "humans", checked: true },
+    ],
+    default: ["ai", "llms", "robots", "humans"],
+  },
+];
+
+// Common questions for all file types
+const commonQuestions = [
   {
     type: "input",
     name: "siteName",
@@ -32,10 +61,14 @@ const questions = [
     message: "Public base URL:",
     default: defaults.baseUrl,
   },
+];
+
+// AI/LLM specific questions
+const aiLlmQuestions = [
   {
     type: "input",
     name: "contact",
-    message: "Contact:",
+    message: "Contact (for AI/LLM):",
     default: defaults.contact,
   },
   {
@@ -87,12 +120,135 @@ const questions = [
   {
     type: "number",
     name: "rateLimitRps",
-    message: "Rate-limit RPS:",
+    message: "Rate-limit RPS (for AI/LLM):",
     default: defaults.rateLimitRps,
     filter: (value) =>
       Number.isFinite(Number(value)) ? Number(value) : defaults.rateLimitRps,
   },
 ];
+
+// robots.txt specific questions
+const robotsQuestions = [
+  {
+    type: "input",
+    name: "robotsUserAgent",
+    message: "robots.txt User-agent:",
+    default: defaults.robotsUserAgent,
+  },
+  {
+    type: "input",
+    name: "robotsCrawlDelay",
+    message: "robots.txt Crawl delay (seconds, 0 for none):",
+    default: defaults.robotsCrawlDelay,
+    filter: (value) => Number(value) || 0,
+  },
+  {
+    type: "input",
+    name: "robotsSitemap",
+    message: "robots.txt Sitemap URL (leave empty to skip):",
+    default: defaults.robotsSitemap,
+  },
+];
+
+// humans.txt specific questions
+const humansQuestions = [
+  {
+    type: "input",
+    name: "language",
+    message: "humans.txt Language:",
+    default: defaults.language,
+  },
+  {
+    type: "input",
+    name: "lastUpdate",
+    message: "humans.txt Last update (YYYY/MM/DD):",
+    default: defaults.lastUpdate,
+  },
+];
+
+// Dynamic question for adding team members
+async function promptForTeamMembers() {
+  const team = [];
+  let addMore = true;
+
+  while (addMore) {
+    const memberAnswers = await inquirer.prompt([
+      {
+        type: "input",
+        name: "name",
+        message: `Team member name (or press Enter to ${team.length === 0 ? "skip" : "finish"}):`,
+      },
+    ]);
+
+    if (!memberAnswers.name) {
+      addMore = false;
+      continue;
+    }
+
+    const detailAnswers = await inquirer.prompt([
+      {
+        type: "input",
+        name: "role",
+        message: "Role/Title:",
+        default: "Developer",
+      },
+      {
+        type: "input",
+        name: "link",
+        message: "Contact link (GitHub, Twitter, website, etc.):",
+      },
+    ]);
+
+    team.push({
+      name: memberAnswers.name,
+      role: detailAnswers.role,
+      link: detailAnswers.link,
+    });
+  }
+
+  return team;
+}
+
+// Dynamic question for adding thanks
+async function promptForThanks() {
+  const thanks = [];
+  let addMore = true;
+
+  while (addMore) {
+    const answer = await inquirer.prompt([
+      {
+        type: "input",
+        name: "thank",
+        message: `Add a thank you (or press Enter to ${thanks.length === 0 ? "skip" : "finish"}):`,
+      },
+    ]);
+
+    if (!answer.thank) {
+      addMore = false;
+    } else {
+      thanks.push(answer.thank);
+    }
+  }
+
+  return thanks;
+}
+
+// Dynamic question for adding technology
+async function promptForTechnology() {
+  const answer = await inquirer.prompt([
+    {
+      type: "input",
+      name: "technology",
+      message: "Technology stack (comma-separated, e.g., Node.js, React, HTML5):",
+      default: "Node.js, JavaScript, HTML5",
+    },
+  ]);
+
+  return answer.technology
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
 
 /**
  * Normalize user answers by splitting comma-separated strings
@@ -129,7 +285,7 @@ async function ensureDirs(outDir, wellKnownDir) {
  */
 function showHelp() {
   console.log(`Usage:
-  ai-txt-init [options]
+  aidottxt [options]
 
 Options:
   --out <dir>       Output directory (default: current directory)
@@ -139,10 +295,10 @@ Options:
   --help, -h        Show this help message
 
 Examples:
-  ai-txt-init
-  ai-txt-init --out ./public
-  ai-txt-init --dry-run
-  ai-txt-init --ai-only --out ./dist
+  aidottxt
+  aidottxt --out ./public
+  aidottxt --dry-run
+  aidottxt --ai-only --out ./dist
 `);
 }
 
