@@ -290,6 +290,13 @@ Contributions are welcome! Please follow these steps:
 
 ## Related Standards
 
-- [ai.txt specification](https://example.com/ai-txt-spec)
-- [llms.txt specification](https://example.com/llms-txt-spec)
-- [robots.txt](https://www.robotstxt.org/)
+This project follows several web standards and specifications:
+
+- [humans.txt](https://humanstxt.org/) - See [humans.txt](humans.txt) for team and site information
+- [robots.txt](https://www.robotstxt.org/) - Standard for web robots
+- [llms.txt](https://llmstxt.org/) - LLM-friendly documentation format
+- [ai.txt](https://ai-txt.org/) - AI agent interaction specification
+
+## Author
+
+**Profullstack, Inc.**
