@@ -1,14 +1,16 @@
 # @profullstack/ai-dot-txt
 
-A Node.js CLI tool to generate `ai.txt` and `llms.txt` files for defining AI/LLM policies for your website or application.
+A Node.js CLI tool to generate `ai.txt`, `llms.txt`, `robots.txt`, and `humans.txt` files for your website or application.
 
 ## Features
 
 - 🤖 Generate `ai.txt` (robots.txt-like format for AI)
 - 📋 Generate `llms.txt` (JSON format in `.well-known/` directory)
+- 🤖 Generate `robots.txt` (web crawler rules)
+- 👥 Generate `humans.txt` (team credits and site info)
 - 🎯 Interactive CLI with sensible defaults
 - ⚙️ Flexible command-line options
-- 🧪 Fully tested with Mocha + Chai
+- 🧪 Fully tested with Mocha + Chai (23 passing tests)
 - ✨ Modern ESM JavaScript (Node.js 20+)
 
 ## Installation
@@ -54,6 +56,8 @@ aidottxt [options]
 - `--out <dir>` - Output directory (default: current directory)
 - `--ai-only` - Generate only `ai.txt`
 - `--llms-only` - Generate only `llms.txt` (in `.well-known/`)
+- `--robots-only` - Generate only `robots.txt`
+- `--humans-only` - Generate only `humans.txt`
 - `--dry-run` - Preview output without writing files
 - `--help, -h` - Show help message
 
@@ -82,6 +86,11 @@ aidottxt --ai-only --out ./dist
 Generate only llms.txt:
 ```bash
 aidottxt --llms-only
+```
+
+Generate only robots.txt and humans.txt:
+```bash
+aidottxt --robots-only --humans-only
 ```
 
 ## Output Files
@@ -126,6 +135,43 @@ Located at `.well-known/llms.txt`. Format:
   "commercial_use": true,
   "rate_limit_rps": 10
 }
+```
+
+### robots.txt
+
+Located at the root of your output directory. Format:
+
+```
+User-agent: *
+Allow: /api/*
+Allow: /docs/*
+Disallow: /admin/*
+Disallow: /private/*
+Crawl-delay: 1
+Sitemap: https://example.com/sitemap.xml
+```
+
+### humans.txt
+
+Located at the root of your output directory. Format:
+
+```
+/* TEAM */
+Developer: John Doe
+Contact: https://github.com/johndoe
+
+Designer: Jane Smith
+Contact: https://twitter.com/janesmith
+
+/* THANKS */
+Open Source Community
+Coffee
+
+/* SITE */
+Last update: 2024/01/01
+Language: English
+Standards: HTML5
+Components: Node.js, JavaScript
 ```
 
 ## Programmatic Usage

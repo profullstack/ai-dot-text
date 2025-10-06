@@ -253,21 +253,26 @@ async function promptForTechnology() {
 /**
  * Normalize user answers by splitting comma-separated strings
  * @param {Object} answers - Raw answers from inquirer
+ * @param {Array} filesToGenerate - Array of file types to generate
  * @returns {Object} Normalized answers
  */
-function normalizeAnswers(answers) {
+function normalizeAnswers(answers, filesToGenerate) {
   const splitList = (str) =>
     str
       .split(",")
       .map((x) => x.trim())
       .filter(Boolean);
 
-  return {
-    ...answers,
-    models: splitList(answers.models),
-    allowPaths: splitList(answers.allowPaths),
-    disallowPaths: splitList(answers.disallowPaths),
-  };
+  const normalized = { ...answers };
+
+  // Normalize AI/LLM answers
+  if (filesToGenerate.includes("ai") || filesToGenerate.includes("llms")) {
+    normalized.models = splitList(answers.models || "");
+    normalized.allowPaths = splitList(answers.allowPaths || "");
+    normalized.disallowPaths = splitList(answers.disallowPaths || "");
+  }
+
+  return normalized;
 }
 
 /**
@@ -291,6 +296,8 @@ Options:
   --out <dir>       Output directory (default: current directory)
   --ai-only         Generate only ai.txt
   --llms-only       Generate only llms.txt (in .well-known/)
+  --robots-only     Generate only robots.txt
+  --humans-only     Generate only humans.txt
   --dry-run         Preview output without writing files
   --help, -h        Show this help message
 
@@ -299,6 +306,7 @@ Examples:
   aidottxt --out ./public
   aidottxt --dry-run
   aidottxt --ai-only --out ./dist
+  aidottxt --robots-only --humans-only
 `);
 }
 
@@ -316,23 +324,104 @@ async function main() {
 
     const wellKnownDir = path.join(args.outDir, ".well-known");
 
+    // Determine which files to generate
+    let filesToGenerate = [];
+    if (args.onlyAi) {
+      filesToGenerate = ["ai"];
+    } else if (args.onlyLlms) {
+      filesToGenerate = ["llms"];
+    } else if (args.onlyRobots) {
+      filesToGenerate = ["robots"];
+    } else if (args.onlyHumans) {
+      filesToGenerate = ["humans"];
+    } else {
+      // Ask user which files to generate
+      const initialAnswers = await inquirer.prompt(initialQuestions);
+      filesToGenerate = initialAnswers.filesToGenerate;
+    }
+
+    // Build questions based on selected files
+    let questionsToAsk = [...commonQuestions];
+
+    if (filesToGenerate.includes("ai") || filesToGenerate.includes("llms")) {
+      questionsToAsk = questionsToAsk.concat(aiLlmQuestions);
+    }
+
+    if (filesToGenerate.includes("robots")) {
+      questionsToAsk = questionsToAsk.concat(robotsQuestions);
+    }
+
+    if (filesToGenerate.includes("humans")) {
+      questionsToAsk = questionsToAsk.concat(humansQuestions);
+    }
+
     // Prompt user for configuration
-    const answers = await inquirer.prompt(questions);
-    const config = normalizeAnswers(answers);
+    const answers = await inquirer.prompt(questionsToAsk);
+
+    // Add team members for humans.txt
+    if (filesToGenerate.includes("humans")) {
+      console.log("\n--- Team Members ---");
+      answers.team = await promptForTeamMembers();
+
+      console.log("\n--- Thanks ---");
+      answers.thanks = await promptForThanks();
+
+      console.log("\n--- Technology Stack ---");
+      answers.technology = await promptForTechnology();
+    }
+
+    const config = normalizeAnswers(answers, filesToGenerate);
 
     // Generate file contents
-    const llmsContent = buildLlmsJson(config);
-    const aiContent = buildAiTxt(config);
+    const fileContents = {};
+
+    if (filesToGenerate.includes("llms")) {
+      fileContents.llms = buildLlmsJson(config);
+    }
+
+    if (filesToGenerate.includes("ai")) {
+      fileContents.ai = buildAiTxt(config);
+    }
+
+    if (filesToGenerate.includes("robots")) {
+      fileContents.robots = buildRobotsTxt({
+        userAgent: config.robotsUserAgent,
+        allowPaths: config.allowPaths || [],
+        disallowPaths: config.disallowPaths || [],
+        crawlDelay: config.robotsCrawlDelay,
+        sitemap: config.robotsSitemap,
+      });
+    }
+
+    if (filesToGenerate.includes("humans")) {
+      fileContents.humans = buildHumansTxt({
+        siteName: config.siteName,
+        siteUrl: config.baseUrl,
+        language: config.language,
+        team: config.team || [],
+        thanks: config.thanks || [],
+        technology: config.technology || [],
+        lastUpdate: config.lastUpdate,
+      });
+    }
 
     // Dry run: just print the output
     if (args.dryRun) {
-      if (!args.onlyAi) {
+      if (fileContents.llms) {
         console.log("\n# /.well-known/llms.txt\n");
-        console.log(llmsContent);
+        console.log(fileContents.llms);
       }
-      if (!args.onlyLlms) {
+      if (fileContents.ai) {
         console.log("\n# /ai.txt\n");
-        console.log(aiContent);
+        console.log(fileContents.ai);
+      }
+      if (fileContents.robots) {
+        console.log("\n# /robots.txt\n");
+        console.log(fileContents.robots);
+      }
+      if (fileContents.humans) {
+        console.log("\n# /humans.txt\n");
+        console.log(fileContents.humans);
       }
       return;
     }
@@ -343,16 +432,28 @@ async function main() {
     // Write files
     const createdFiles = [];
 
-    if (!args.onlyAi) {
+    if (fileContents.llms) {
       const llmsPath = path.join(wellKnownDir, "llms.txt");
-      await fs.writeFile(llmsPath, llmsContent, "utf8");
+      await fs.writeFile(llmsPath, fileContents.llms, "utf8");
       createdFiles.push(llmsPath);
     }
 
-    if (!args.onlyLlms) {
+    if (fileContents.ai) {
       const aiPath = path.join(args.outDir, "ai.txt");
-      await fs.writeFile(aiPath, aiContent, "utf8");
+      await fs.writeFile(aiPath, fileContents.ai, "utf8");
       createdFiles.push(aiPath);
+    }
+
+    if (fileContents.robots) {
+      const robotsPath = path.join(args.outDir, "robots.txt");
+      await fs.writeFile(robotsPath, fileContents.robots, "utf8");
+      createdFiles.push(robotsPath);
+    }
+
+    if (fileContents.humans) {
+      const humansPath = path.join(args.outDir, "humans.txt");
+      await fs.writeFile(humansPath, fileContents.humans, "utf8");
+      createdFiles.push(humansPath);
     }
 
     // Show success message

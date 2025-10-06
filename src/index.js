@@ -1,5 +1,10 @@
 /**
  * Main entry point for programmatic usage
  */
-export { buildAiTxt, buildLlmsJson } from "./generators.js";
+export {
+  buildAiTxt,
+  buildLlmsJson,
+  buildRobotsTxt,
+  buildHumansTxt,
+} from "./generators.js";
 export { parseArgs } from "./args.js";
