@@ -6,5 +6,6 @@ export {
   buildLlmsJson,
   buildRobotsTxt,
   buildHumansTxt,
+  buildAiPluginJson,
 } from "./generators.js";
 export { parseArgs } from "./args.js";

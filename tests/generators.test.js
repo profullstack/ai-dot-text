@@ -4,6 +4,7 @@ import {
   buildLlmsJson,
   buildRobotsTxt,
   buildHumansTxt,
+  buildAiPluginJson,
 } from "../src/generators.js";
 
 describe("File Generators", () => {
@@ -281,6 +282,99 @@ describe("File Generators", () => {
 
       expect(result).to.include("Lead Developer: Alice");
       expect(result).to.include("Contact: https://alice.dev");
+    });
+  });
+
+  describe("buildAiPluginJson", () => {
+    it("should generate a valid ai-plugin.json manifest", () => {
+      const config = {
+        schemaVersion: "v1",
+        nameForModel: "todo",
+        nameForHuman: "TODO List",
+        descriptionForModel:
+          "Plugin for managing a TODO list, you can add, remove and view your TODOs.",
+        descriptionForHuman: "Manage your TODO list.",
+        authType: "none",
+        apiType: "openapi",
+        apiUrl: "https://your-app-url.com/.well-known/openapi.yaml",
+        hasUserAuthentication: false,
+        logoUrl: "https://your-app-url.com",
+        contactEmail: "support@example.com",
+        legalInfoUrl: "http://example.com/legal",
+      };
+
+      const result = buildAiPluginJson(config);
+      const parsed = JSON.parse(result);
+
+      expect(parsed).to.have.property("schema_version", "v1");
+      expect(parsed).to.have.property("name_for_model", "todo");
+      expect(parsed).to.have.property("name_for_human", "TODO List");
+      expect(parsed).to.have.property(
+        "description_for_model",
+        "Plugin for managing a TODO list, you can add, remove and view your TODOs."
+      );
+      expect(parsed).to.have.property(
+        "description_for_human",
+        "Manage your TODO list."
+      );
+      expect(parsed.auth).to.deep.equal({ type: "none" });
+      expect(parsed.api).to.deep.equal({
+        type: "openapi",
+        url: "https://your-app-url.com/.well-known/openapi.yaml",
+        has_user_authentication: false,
+      });
+      expect(parsed).to.have.property(
+        "logo_url",
+        "https://your-app-url.com"
+      );
+      expect(parsed).to.have.property(
+        "contact_email",
+        "support@example.com"
+      );
+      expect(parsed).to.have.property(
+        "legal_info_url",
+        "http://example.com/legal"
+      );
+    });
+
+    it("should default schema_version, auth.type, and api.type", () => {
+      const config = {
+        nameForModel: "x",
+        nameForHuman: "X",
+        descriptionForModel: "d",
+        descriptionForHuman: "d",
+        apiUrl: "https://x.example/openapi.yaml",
+        logoUrl: "https://x.example/logo.png",
+        contactEmail: "x@example.com",
+        legalInfoUrl: "https://x.example/legal",
+      };
+
+      const result = buildAiPluginJson(config);
+      const parsed = JSON.parse(result);
+
+      expect(parsed.schema_version).to.equal("v1");
+      expect(parsed.auth.type).to.equal("none");
+      expect(parsed.api.type).to.equal("openapi");
+      expect(parsed.api.has_user_authentication).to.equal(false);
+    });
+
+    it("should coerce hasUserAuthentication to boolean", () => {
+      const config = {
+        nameForModel: "x",
+        nameForHuman: "X",
+        descriptionForModel: "d",
+        descriptionForHuman: "d",
+        apiUrl: "https://x.example/openapi.yaml",
+        hasUserAuthentication: 1,
+        logoUrl: "https://x.example/logo.png",
+        contactEmail: "x@example.com",
+        legalInfoUrl: "https://x.example/legal",
+      };
+
+      const result = buildAiPluginJson(config);
+      const parsed = JSON.parse(result);
+
+      expect(parsed.api.has_user_authentication).to.equal(true);
     });
   });
 });

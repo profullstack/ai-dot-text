@@ -8,6 +8,7 @@ import {
   buildLlmsJson,
   buildRobotsTxt,
   buildHumansTxt,
+  buildAiPluginJson,
 } from "./generators.js";
 
 const defaults = {
@@ -29,6 +30,20 @@ const defaults = {
   // humans.txt defaults
   language: "English",
   lastUpdate: new Date().toISOString().split("T")[0].replace(/-/g, "/"),
+  // ai-plugin.json defaults
+  pluginSchemaVersion: "v1",
+  pluginNameForModel: "my_plugin",
+  pluginNameForHuman: "My Plugin",
+  pluginDescriptionForModel:
+    "Plugin description for the model, explaining what it can do.",
+  pluginDescriptionForHuman: "Plugin description for humans.",
+  pluginAuthType: "none",
+  pluginApiType: "openapi",
+  pluginApiUrl: "https://example.com/.well-known/openapi.yaml",
+  pluginHasUserAuth: false,
+  pluginLogoUrl: "https://example.com/logo.png",
+  pluginContactEmail: "support@example.com",
+  pluginLegalInfoUrl: "https://example.com/legal",
 };
 
 // Initial question to determine which files to generate
@@ -42,6 +57,11 @@ const initialQuestions = [
       { name: "llms.txt (LLM policies JSON)", value: "llms", checked: true },
       { name: "robots.txt (Web crawler rules)", value: "robots", checked: true },
       { name: "humans.txt (Team credits)", value: "humans", checked: true },
+      {
+        name: "ai-plugin.json (OpenAI plugin manifest)",
+        value: "plugin",
+        checked: false,
+      },
     ],
     default: ["ai", "llms", "robots", "humans"],
   },
@@ -147,6 +167,84 @@ const robotsQuestions = [
     name: "robotsSitemap",
     message: "robots.txt Sitemap URL (leave empty to skip):",
     default: defaults.robotsSitemap,
+  },
+];
+
+// ai-plugin.json specific questions
+const pluginQuestions = [
+  {
+    type: "input",
+    name: "pluginSchemaVersion",
+    message: "Plugin schema version:",
+    default: defaults.pluginSchemaVersion,
+  },
+  {
+    type: "input",
+    name: "pluginNameForModel",
+    message: "Plugin name (for model, lowercase/underscores):",
+    default: defaults.pluginNameForModel,
+  },
+  {
+    type: "input",
+    name: "pluginNameForHuman",
+    message: "Plugin name (for humans):",
+    default: defaults.pluginNameForHuman,
+  },
+  {
+    type: "input",
+    name: "pluginDescriptionForModel",
+    message: "Description for the model:",
+    default: defaults.pluginDescriptionForModel,
+  },
+  {
+    type: "input",
+    name: "pluginDescriptionForHuman",
+    message: "Description for humans:",
+    default: defaults.pluginDescriptionForHuman,
+  },
+  {
+    type: "list",
+    name: "pluginAuthType",
+    message: "Auth type:",
+    choices: ["none", "user_http", "service_http", "oauth"],
+    default: defaults.pluginAuthType,
+  },
+  {
+    type: "list",
+    name: "pluginApiType",
+    message: "API type:",
+    choices: ["openapi"],
+    default: defaults.pluginApiType,
+  },
+  {
+    type: "input",
+    name: "pluginApiUrl",
+    message: "OpenAPI spec URL:",
+    default: defaults.pluginApiUrl,
+  },
+  {
+    type: "confirm",
+    name: "pluginHasUserAuth",
+    message: "Has user authentication?",
+    default: defaults.pluginHasUserAuth,
+  },
+  {
+    type: "input",
+    name: "pluginLogoUrl",
+    message: "Logo URL:",
+    default: defaults.pluginLogoUrl,
+  },
+  {
+    type: "input",
+    name: "pluginContactEmail",
+    message: "Contact email:",
+    default: defaults.pluginContactEmail,
+  },
+  {
+    type: "input",
+    name: "pluginLegalInfoUrl",
+    message: "Legal info URL:",
+    default: defaults.pluginLegalInfoUrl,
   },
 ];
 
@@ -298,6 +396,7 @@ Options:
   --llms-only       Generate only llms.txt (in .well-known/)
   --robots-only     Generate only robots.txt
   --humans-only     Generate only humans.txt
+  --plugin-only     Generate only ai-plugin.json (in .well-known/)
   --dry-run         Preview output without writing files
   --help, -h        Show this help message
 
@@ -334,6 +433,8 @@ async function main() {
       filesToGenerate = ["robots"];
     } else if (args.onlyHumans) {
       filesToGenerate = ["humans"];
+    } else if (args.onlyPlugin) {
+      filesToGenerate = ["plugin"];
     } else {
       // Ask user which files to generate
       const initialAnswers = await inquirer.prompt(initialQuestions);
@@ -353,6 +454,10 @@ async function main() {
 
     if (filesToGenerate.includes("humans")) {
       questionsToAsk = questionsToAsk.concat(humansQuestions);
+    }
+
+    if (filesToGenerate.includes("plugin")) {
+      questionsToAsk = questionsToAsk.concat(pluginQuestions);
     }
 
     // Prompt user for configuration
@@ -393,6 +498,23 @@ async function main() {
       });
     }
 
+    if (filesToGenerate.includes("plugin")) {
+      fileContents.plugin = buildAiPluginJson({
+        schemaVersion: config.pluginSchemaVersion,
+        nameForModel: config.pluginNameForModel,
+        nameForHuman: config.pluginNameForHuman,
+        descriptionForModel: config.pluginDescriptionForModel,
+        descriptionForHuman: config.pluginDescriptionForHuman,
+        authType: config.pluginAuthType,
+        apiType: config.pluginApiType,
+        apiUrl: config.pluginApiUrl,
+        hasUserAuthentication: config.pluginHasUserAuth,
+        logoUrl: config.pluginLogoUrl,
+        contactEmail: config.pluginContactEmail,
+        legalInfoUrl: config.pluginLegalInfoUrl,
+      });
+    }
+
     if (filesToGenerate.includes("humans")) {
       fileContents.humans = buildHumansTxt({
         siteName: config.siteName,
@@ -422,6 +544,10 @@ async function main() {
       if (fileContents.humans) {
         console.log("\n# /humans.txt\n");
         console.log(fileContents.humans);
+      }
+      if (fileContents.plugin) {
+        console.log("\n# /.well-known/ai-plugin.json\n");
+        console.log(fileContents.plugin);
       }
       return;
     }
@@ -454,6 +580,12 @@ async function main() {
       const humansPath = path.join(args.outDir, "humans.txt");
       await fs.writeFile(humansPath, fileContents.humans, "utf8");
       createdFiles.push(humansPath);
+    }
+
+    if (fileContents.plugin) {
+      const pluginPath = path.join(wellKnownDir, "ai-plugin.json");
+      await fs.writeFile(pluginPath, fileContents.plugin, "utf8");
+      createdFiles.push(pluginPath);
     }
 
     // Show success message

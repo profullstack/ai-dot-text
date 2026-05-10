@@ -29,6 +29,7 @@ export function parseArgs(args) {
     onlyLlms: flags.has("--llms-only"),
     onlyRobots: flags.has("--robots-only"),
     onlyHumans: flags.has("--humans-only"),
+    onlyPlugin: flags.has("--plugin-only"),
     dryRun: flags.has("--dry-run"),
     help: flags.has("--help") || flags.has("-h"),
   };

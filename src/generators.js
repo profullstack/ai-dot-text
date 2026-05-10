@@ -75,6 +75,34 @@ export function buildRobotsTxt(config) {
 }
 
 /**
+ * Build ai-plugin.json content (OpenAI plugin manifest)
+ * @param {Object} config - Configuration object
+ * @returns {string} JSON string for ai-plugin.json
+ */
+export function buildAiPluginJson(config) {
+  const data = {
+    schema_version: config.schemaVersion || "v1",
+    name_for_model: config.nameForModel,
+    name_for_human: config.nameForHuman,
+    description_for_model: config.descriptionForModel,
+    description_for_human: config.descriptionForHuman,
+    auth: {
+      type: config.authType || "none",
+    },
+    api: {
+      type: config.apiType || "openapi",
+      url: config.apiUrl,
+      has_user_authentication: Boolean(config.hasUserAuthentication),
+    },
+    logo_url: config.logoUrl,
+    contact_email: config.contactEmail,
+    legal_info_url: config.legalInfoUrl,
+  };
+
+  return JSON.stringify(data, null, 2) + "\n";
+}
+
+/**
  * Build humans.txt content
  * @param {Object} config - Configuration object
  * @returns {string} Text content for humans.txt

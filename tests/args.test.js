@@ -41,6 +41,14 @@ describe("Argument Parser", () => {
       expect(result.onlyAi).to.equal(false);
     });
 
+    it("should detect --plugin-only flag", () => {
+      const args = ["--plugin-only"];
+      const result = parseArgs(args);
+
+      expect(result.onlyPlugin).to.equal(true);
+      expect(result.onlyAi).to.equal(false);
+    });
+
     it("should detect --dry-run flag", () => {
       const args = ["--dry-run"];
       const result = parseArgs(args);

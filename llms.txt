@@ -1,0 +1,37 @@
+# @profullstack/ai-dot-txt
+
+> A Node.js CLI tool that generates ai.txt, llms.txt, robots.txt, and humans.txt files for websites and applications. It provides both an interactive CLI and a programmatic API for creating standardized AI/LLM policy files and web metadata.
+
+The tool helps site owners declare AI interaction policies (training permissions, data retention, commercial use, rate limits) and generate web standard files from a single workflow. Built with modern ESM JavaScript, requires Node.js 20+.
+
+## Docs
+
+- [README](README.md): Full documentation including installation, CLI usage, programmatic API, configuration options, and project structure
+- [ai.txt specification](https://ai-txt.org/): The ai.txt standard for AI agent interaction policies
+- [llms.txt specification](https://llmstxt.org/): The llms.txt standard for LLM-friendly documentation
+- [robots.txt specification](https://www.robotstxt.org/): Standard for web robot exclusion rules
+- [humans.txt specification](https://humanstxt.org/): Standard for team and site credits
+
+## API
+
+- [Programmatic API](src/index.js): Exports buildAiTxt, buildLlmsJson, buildRobotsTxt, buildHumansTxt, and parseArgs
+- [File generators](src/generators.js): Core functions that build ai.txt, llms.txt (JSON), robots.txt, and humans.txt content from config objects
+- [Argument parser](src/args.js): CLI argument parser supporting --out, --ai-only, --llms-only, --robots-only, --humans-only, --dry-run flags
+
+## CLI
+
+- [CLI entry point](src/cli.js): Interactive CLI using inquirer with prompts for site name, base URL, contact, models, capabilities, paths, permissions, rate limits, and humans.txt team/thanks sections
+
+## Examples
+
+- [ai.txt output format](README.md): Robots.txt-like format with User-agent, Allow/Disallow, Training, Retention, Commercial-Use, Rate-Limit-RPS directives
+- [llms.txt output format](README.md): JSON format with version, site_name, contact, models, capabilities, policy, training, retention, commercial_use, rate_limit_rps fields
+- [robots.txt output format](README.md): Standard User-agent, Allow, Disallow, Crawl-delay, Sitemap directives
+- [humans.txt output format](README.md): TEAM, THANKS, and SITE sections following humanstxt.org format
+
+## Optional
+
+- [Tests](tests/): 23 tests covering argument parsing and all four file generators with edge cases
+- [ESLint config](eslint.config.js): ES2024 linting configuration
+- [Prettier config](.prettierrc): Code formatting rules
+- [humans.txt](humans.txt): Project team and site credits
