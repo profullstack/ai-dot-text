@@ -12,6 +12,8 @@
     "test:watch": "mocha tests/**/*.test.js --watch",
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix",
+    "lint:oxlint": "oxlint",
+    "lint:oxlint:fix": "oxlint --fix",
     "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\"",
     "format:check": "prettier --check \"src/**/*.js\" \"tests/**/*.js\""
   },
@@ -37,6 +39,7 @@
     "chai": "^5.1.2",
     "eslint": "^9.17.0",
     "mocha": "^11.0.1",
+    "oxlint": "^1.69.0",
     "prettier": "^3.4.2"
   }
 }
