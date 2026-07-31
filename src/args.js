@@ -9,9 +9,7 @@ export function parseArgs(args) {
   const flags = new Set(args.filter((a) => a.startsWith("-")));
 
   const getFlagValue = (name, defaultValue) => {
-    const index = args.findIndex(
-      (a) => a === name || a.startsWith(`${name}=`)
-    );
+    const index = args.findIndex((a) => a === name || a.startsWith(`${name}=`));
     if (index === -1) return defaultValue;
 
     const arg = args[index];
@@ -33,4 +31,21 @@ export function parseArgs(args) {
     dryRun: flags.has("--dry-run"),
     help: flags.has("--help") || flags.has("-h"),
   };
+}
+
+/**
+ * Get the file types explicitly selected by --*-only flags
+ * @param {Object} args - Parsed arguments object
+ * @returns {string[]} Selected file types
+ */
+export function getRequestedFiles(args) {
+  return [
+    [args.onlyAi, "ai"],
+    [args.onlyLlms, "llms"],
+    [args.onlyRobots, "robots"],
+    [args.onlyHumans, "humans"],
+    [args.onlyPlugin, "plugin"],
+  ]
+    .filter(([selected]) => selected)
+    .map(([, file]) => file);
 }

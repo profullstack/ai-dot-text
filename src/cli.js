@@ -2,7 +2,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import inquirer from "inquirer";
-import { parseArgs } from "./args.js";
+import { getRequestedFiles, parseArgs } from "./args.js";
 import {
   buildAiTxt,
   buildLlmsJson,
@@ -55,7 +55,11 @@ const initialQuestions = [
     choices: [
       { name: "ai.txt (AI/LLM policies)", value: "ai", checked: true },
       { name: "llms.txt (LLM policies JSON)", value: "llms", checked: true },
-      { name: "robots.txt (Web crawler rules)", value: "robots", checked: true },
+      {
+        name: "robots.txt (Web crawler rules)",
+        value: "robots",
+        checked: true,
+      },
       { name: "humans.txt (Team credits)", value: "humans", checked: true },
       {
         name: "ai-plugin.json (OpenAI plugin manifest)",
@@ -337,7 +341,8 @@ async function promptForTechnology() {
     {
       type: "input",
       name: "technology",
-      message: "Technology stack (comma-separated, e.g., Node.js, React, HTML5):",
+      message:
+        "Technology stack (comma-separated, e.g., Node.js, React, HTML5):",
       default: "Node.js, JavaScript, HTML5",
     },
   ]);
@@ -424,18 +429,8 @@ async function main() {
     const wellKnownDir = path.join(args.outDir, ".well-known");
 
     // Determine which files to generate
-    let filesToGenerate = [];
-    if (args.onlyAi) {
-      filesToGenerate = ["ai"];
-    } else if (args.onlyLlms) {
-      filesToGenerate = ["llms"];
-    } else if (args.onlyRobots) {
-      filesToGenerate = ["robots"];
-    } else if (args.onlyHumans) {
-      filesToGenerate = ["humans"];
-    } else if (args.onlyPlugin) {
-      filesToGenerate = ["plugin"];
-    } else {
+    let filesToGenerate = getRequestedFiles(args);
+    if (filesToGenerate.length === 0) {
       // Ask user which files to generate
       const initialAnswers = await inquirer.prompt(initialQuestions);
       filesToGenerate = initialAnswers.filesToGenerate;

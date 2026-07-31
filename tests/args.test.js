@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { parseArgs } from "../src/args.js";
+import { getRequestedFiles, parseArgs } from "../src/args.js";
 
 describe("Argument Parser", () => {
   describe("parseArgs", () => {
@@ -95,6 +95,26 @@ describe("Argument Parser", () => {
 
       expect(result.outDir).to.equal("/custom");
       expect(result.dryRun).to.equal(true);
+    });
+  });
+
+  describe("getRequestedFiles", () => {
+    it("should preserve every combined --*-only selection", () => {
+      const args = parseArgs([
+        "--robots-only",
+        "--humans-only",
+        "--plugin-only",
+      ]);
+
+      expect(getRequestedFiles(args)).to.deep.equal([
+        "robots",
+        "humans",
+        "plugin",
+      ]);
+    });
+
+    it("should return no selections when the CLI should prompt", () => {
+      expect(getRequestedFiles(parseArgs([]))).to.deep.equal([]);
     });
   });
 });
